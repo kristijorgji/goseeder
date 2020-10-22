@@ -8,6 +8,7 @@ import (
 	"log"
 )
 
+//FromJson inserts into a database table with name same as the filename all the json entries
 func FromJson(s Seeder, filename string) {
 	content, err := ioutil.ReadFile(fmt.Sprintf("db/seeds/data/%s.json", filename))
 	if err != nil {

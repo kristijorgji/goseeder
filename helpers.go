@@ -9,14 +9,14 @@ import (
 )
 
 const (
-	InfoColor    = "\033[1;34m%s\033[0m"
-	NoticeColor  = "\033[1;36m%s\033[0m"
-	WarningColor = "\033[1;33m%s\033[0m"
-	ErrorColor   = "\033[1;31m%s\033[0m"
-	DebugColor   = "\033[0;36m%s\033[0m"
+	infoColor    = "\033[1;34m%s\033[0m"
+	noticeColor  = "\033[1;36m%s\033[0m"
+	warningColor = "\033[1;33m%s\033[0m"
+	errorColor   = "\033[1;31m%s\033[0m"
+	debugColor   = "\033[0;36m%s\033[0m"
 )
 
-var printError = color(ErrorColor)
+var printError = color(errorColor)
 
 func color(colorString string) func(...interface{}) string {
 	return func(args ...interface{}) string {
