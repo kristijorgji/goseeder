@@ -181,13 +181,15 @@ and it will run all your seeds against the provided db connection.
 
 The framework will look for `categories.json` file in the path `db/seeds/data`, and insert all the entries there in a table named `categories` (inferred from the file name)
 
-If you have a seed registered for another environment, for example a test seed, the framework instead will look for the json file at `db/seeds/test/data`
+If you have a seed registered for another environment, for example a test seed, the framework instead will look for the json file at `db/seeds/data/test`
+
+So the rule is it will always lookup in this pattern `db/seeds/data/[environment]/[specifiedFileName].[type]`
 
 ### 3. Run Seeds Only For Specific Env
 
 Many times we want to have seeds only for `test` environment, test purpose and want to avoid having thousand of randomly generated rows inserted into production database by mistake!
 
-Or we just want granular control, to have separate data to populate our app/web in different way for `staging` `prod` `yourcustomenv` and so on. 
+Or we just want to have granular control, to have separate data to populate our app/web in different way for `staging` `prod` `yourcustomenv` and so on. 
 
 goseeder is designed to take care of this by using one of the following methods:
 
