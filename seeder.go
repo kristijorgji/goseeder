@@ -13,7 +13,8 @@ import (
 
 // Seeder root seeder offering access to db connection and util functions
 type Seeder struct {
-	DB *sql.DB
+	DB      *sql.DB
+	context clientSeeder
 }
 
 type clientSeeder struct {
@@ -40,7 +41,7 @@ func WithSeeder(conProvider func() *sql.DB, clientMain func()) {
 		return
 	}
 
-	var seeders []string = make([]string, 0)
+	var seeders = make([]string, 0)
 	if len(names) > 0 {
 		seeders = strings.Split(names, ",")
 	}
@@ -73,8 +74,6 @@ func RegisterForEnv(env string, seeder func(s Seeder)) {
 
 // Execute will executes the given seeder method
 func execute(db *sql.DB, env string, seedMethodNames ...string) {
-	s := Seeder{db}
-
 	// Execute all seeders if no method name is given
 	if len(seedMethodNames) == 0 {
 		if env == "" {
@@ -84,7 +83,10 @@ func execute(db *sql.DB, env string, seedMethodNames ...string) {
 		}
 		for _, seeder := range seeders {
 			if env == "" || env == seeder.env {
-				seed(&s, seeder)
+				seed(&Seeder{
+					DB:      db,
+					context: seeder,
+				})
 			}
 		}
 		return
@@ -92,22 +94,26 @@ func execute(db *sql.DB, env string, seedMethodNames ...string) {
 
 	for _, seeder := range seeders {
 		if _, r := findString(seedMethodNames, seeder.name); (env == "" || env == seeder.env) && r {
-			seed(&s, seeder)
+			seed(&Seeder{
+				DB:      db,
+				context: seeder,
+			})
 		}
 	}
 }
 
-func seed(rootSeeder *Seeder, seeder clientSeeder) {
+func seed(seeder *Seeder) {
+	clientSeeder := seeder.context
 	start := time.Now()
-	log.Printf("[%s] started seeding...\n", seeder.name)
+	log.Printf("[%s] started seeding...\n", clientSeeder.name)
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Print(printError(fmt.Sprintf("[%s] seed failed: %+v\n", seeder.name, r)))
+			log.Print(printError(fmt.Sprintf("[%s] seed failed: %+v\n", clientSeeder.name, r)))
 		}
 	}()
 
-	seeder.cb(*rootSeeder)
+	clientSeeder.cb(*seeder)
 	elapsed := time.Since(start)
-	log.Printf("[%s] seeded successfully, duration %s\n", seeder.name, elapsed)
+	log.Printf("[%s] seeded successfully, duration %s\n", clientSeeder.name, elapsed)
 }

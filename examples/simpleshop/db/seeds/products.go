@@ -8,10 +8,11 @@ import (
 )
 
 func productsSeeder(s goseeder.Seeder) {
-	goseeder.FromJson(s, "products")
+	s.FromJson("products")
 }
 
-func testExercisesSeeder(s goseeder.Seeder) {
+func testProductsSeeder(s goseeder.Seeder) {
+	s.FromJson("products")
 	for i := 0; i < 100; i++ {
 		stmt, _ := s.DB.Prepare(`INSERT INTO products(id, name) VALUES (?, ?)`)
 		_, err := stmt.Exec(

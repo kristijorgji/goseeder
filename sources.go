@@ -9,8 +9,12 @@ import (
 )
 
 //FromJson inserts into a database table with name same as the filename all the json entries
-func FromJson(s Seeder, filename string) {
-	content, err := ioutil.ReadFile(fmt.Sprintf("db/seeds/data/%s.json", filename))
+func (s Seeder) FromJson(filename string) {
+	var folder = ""
+	if s.context.env != "" {
+		folder = fmt.Sprintf("%s/", s.context.env)
+	}
+	content, err := ioutil.ReadFile(fmt.Sprintf("db/seeds/data/%s%s.json", folder, filename))
 	if err != nil {
 		log.Fatal(err)
 	}

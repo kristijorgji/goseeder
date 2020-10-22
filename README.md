@@ -14,11 +14,11 @@ I was searching for a go seeder similar to the one that Laravel/Lumen provides a
 Knowing that this is such an important key element of any big project for testing and seeding projects with dummy data I decided to create one myself and share.
 
 #### Features
-For now the library supports only MySql as a database driver for its utility functions like `FromJson` but is db agnostic for your custom seeders you can use any database that is supported by `sql.DB`
+For now the library supports only MySql as a database driver for its utility functions like `FromJson` provided by `Seeder` struct, but it is db agnostic for your custom seeders you can use any database that is supported by `sql.DB`
 
 `goseeder`
 1. Allows specifying seeds for different environments such as test,common (all envs) and more (flexible you can define them) 
-2. Provides out of the box functions like `FromJson` to seed the table from json data and more data formats and drivers coming soon
+2. Provides out of the box functions like `(s Seeder) FromJson` to seed the table from json data and more data formats and drivers coming soon
 
 # Table of Contents
 
@@ -141,7 +141,7 @@ import (
 )
 
 func categoriesSeeder(s goseeder.Seeder) {
-	goseeder.FromJson(s, "categories")
+	s.FromJson("categories")
 }
 
 ```
@@ -181,6 +181,8 @@ and it will run all your seeds against the provided db connection.
 
 The framework will look for `categories.json` file in the path `db/seeds/data`, and insert all the entries there in a table named `categories` (inferred from the file name)
 
+If you have a seed registered for another environment, for example a test seed, the framework instead will look for the json file at `db/seeds/test/data`
+
 ### 3. Run Seeds Only For Specific Env
 
 Many times we want to have seeds only for `test` environment, test purpose and want to avoid having thousand of randomly generated rows inserted into production database by mistake!
@@ -205,7 +207,7 @@ import (
 )
 
 func categoriesSeeder(s goseeder.Seeder) {
-	goseeder.FromJson(s, "categories")
+	s.FromJson("categories")
 }
 
 func testCategoriesSeeder(s goseeder.Seeder) {

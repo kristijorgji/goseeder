@@ -7,7 +7,7 @@ import (
 )
 
 func categoriesSeeder(s goseeder.Seeder) {
-	goseeder.FromJson(s, "categories")
+	s.FromJson("categories")
 }
 
 func testCategoriesSeeder(s goseeder.Seeder) {
