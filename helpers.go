@@ -66,6 +66,7 @@ func prepareStatement(table string, row map[string]string) (strings.Builder, []i
 }
 
 func parseValue(value string) interface{} {
+	return value;
 	if parsed, err := strconv.ParseInt(value, 10, 64); err == nil {
 		return parsed
 	}
