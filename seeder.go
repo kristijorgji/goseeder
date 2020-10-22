@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Seeder type
+// Seeder root seeder offering access to db connection and util functions
 type Seeder struct {
 	DB *sql.DB
 }
@@ -24,10 +24,11 @@ type clientSeeder struct {
 
 var seeders []clientSeeder
 
+// WithSeeder It gives your main function seeding functions and provides the cli arguments
 func WithSeeder(conProvider func() *sql.DB, clientMain func()) {
-	var seed bool = false
-	var env string = ""
-	var names string = ""
+	var seed = false
+	var env = ""
+	var names = ""
 
 	flag.BoolVar(&seed, "gseed", seed, "goseeder - if set will seed")
 	flag.StringVar(&env, "gsenv", "", "goseeder - env for which seeds to execute")
@@ -48,14 +49,17 @@ func WithSeeder(conProvider func() *sql.DB, clientMain func()) {
 	os.Exit(0)
 }
 
+// Register the given seed function  as common to run for all environments
 func Register(seeder func(s Seeder)) {
 	RegisterForEnv("", seeder)
 }
 
+// RegisterForTest the given seed function for test environment
 func RegisterForTest(seeder func(s Seeder)) {
 	RegisterForEnv("test", seeder)
 }
 
+// RegisterForEnv the given seed function for a specific environment
 func RegisterForEnv(env string, seeder func(s Seeder)) {
 	r := regexp.MustCompile(`.*\.(?P<name>[a-zA-Z]+$)`)
 	match := r.FindStringSubmatch(getFunctionName(seeder))

@@ -1,10 +1,10 @@
 package seeds
 
 import (
-	"simpleshop/util"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/kristijorgji/goseeder"
+	"simpleshop/util"
 )
 
 func productsSeeder(s goseeder.Seeder) {

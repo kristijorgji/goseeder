@@ -1,5 +1,11 @@
 # goseeder
 
+![GitHub Workflow Status](https://github.com/kristijorgji/goseeder/workflows/CI/badge.svg)
+[![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/kristijorgji/goseeder?tab=doc)
+[![codecov](https://codecov.io/gh/kristijorgji/goseeder/branch/master/graph/badge.svg)](https://codecov.io/gh/kristijorgji/goseeder)
+[![Go Report Card](https://goreportcard.com/badge/kristijorgji/goseeder)](https://goreportcard.com/report/kristijorgji/goseeder)
+[![Sourcegraph](https://sourcegraph.com/github.com/kristijorgji/goseeder/-/badge.svg)](https://sourcegraph.com/github.com/kristijorgji/goseeder?badge)
+
 #### Motivation
 Golang is a great language and getting better as community and frameworks, but there are still a lot of pieces missing for developing fast, accurate way and avoiding repetitions.
  
