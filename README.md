@@ -109,6 +109,8 @@ func connectToDbOrDie() *sql.DB {
 
 ```
 
+
+
 ### 2. Registering Your Seeds
 
 Great! After step 1 our executable is able to run in seed mode or default mode.
