@@ -2,10 +2,10 @@ package goseeder
 
 import (
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -15,6 +15,29 @@ import (
 type Seeder struct {
 	DB      *sql.DB
 	context clientSeeder
+}
+
+//Registration this allows for custom registration with full options available at once, like specifying custom seed name and env in one go. Then have to finish registration by calling Complete
+type Registration struct {
+	Name      string
+	Env       string
+	completed bool
+}
+
+//Complete this finished the registration of this registration instance. If you call a second time for same instance, error will be throw
+func (r Registration) Complete(s func(seeder Seeder)) error {
+	if r.completed {
+		return errors.New("registration is already completed. You can use one registration only one time")
+	}
+
+	seeders = append(seeders, clientSeeder{
+		env:  r.Env,
+		name: r.Name,
+		cb:   s,
+	})
+	r.completed = true
+
+	return nil
 }
 
 type clientSeeder struct {
@@ -41,13 +64,12 @@ func WithSeeder(conProvider func() *sql.DB, clientMain func()) {
 		return
 	}
 
-	var seeders = make([]string, 0)
+	var specifiedSeeders = make([]string, 0)
 	if len(names) > 0 {
-		seeders = strings.Split(names, ",")
+		specifiedSeeders = strings.Split(names, ",")
 	}
 
-	execute(conProvider(), env, seeders...)
-	os.Exit(0)
+	Execute(conProvider(), env, specifiedSeeders)
 }
 
 // Register the given seed function  as common to run for all environments
@@ -62,7 +84,7 @@ func RegisterForTest(seeder func(s Seeder)) {
 
 // RegisterForEnv the given seed function for a specific environment
 func RegisterForEnv(env string, seeder func(s Seeder)) {
-	r := regexp.MustCompile(`.*\.(?P<name>[a-zA-Z]+$)`)
+	r := regexp.MustCompile(`.*\.(?P<name>[a-zA-Z0-9]+$)`)
 	match := r.FindStringSubmatch(getFunctionName(seeder))
 
 	seeders = append(seeders, clientSeeder{
@@ -72,8 +94,10 @@ func RegisterForEnv(env string, seeder func(s Seeder)) {
 	})
 }
 
-// Execute will executes the given seeder method
-func execute(db *sql.DB, env string, seedMethodNames ...string) {
+// Execute use this method for using this lib programmatically and executing
+// seeder directly with full flexibility. Be sure first to have registered your
+// seeders
+func Execute(db *sql.DB, env string, seedMethodNames []string) {
 	// Execute all seeders if no method name is given
 	if len(seedMethodNames) == 0 {
 		if env == "" {

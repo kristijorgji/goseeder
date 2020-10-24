@@ -248,6 +248,8 @@ To run the test seeder above you have to run:
 go run main.go --gseed --gsenv=test
 ```
 
+This will run only the tests registered for the env `test`, all other seeds will get ignored (also those without environment known as `common` seeds))
+
 ### 4. Run Seeds By Name
 
 When we register a seed like shown in step 2, the seed name is the same as the function name, so our seed is called `categoriesSeeder` because that is the name of the function we register below
