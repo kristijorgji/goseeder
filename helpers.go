@@ -16,7 +16,13 @@ const (
 	debugColor   = "\033[0;36m%s\033[0m"
 )
 
-var printError = color(errorColor)
+var printInfo = func(s string) {
+	fmt.Print(color(infoColor)(s))
+}
+
+var printError = func(s string) {
+	fmt.Print(color(errorColor)(s))
+}
 
 func color(colorString string) func(...interface{}) string {
 	return func(args ...interface{}) string {

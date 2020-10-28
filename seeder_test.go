@@ -127,7 +127,7 @@ func TestWithSeeder_seed_for_env(t *testing.T) {
 
 	WithSeeder(conProvider, clientMain)
 	require.Equal(t, 0, mockFnStatus.callCount)
-	require.Equal(t, 0, mockCommonSeedStatus.callCount)
+	require.Equal(t, 1, mockCommonSeedStatus.callCount)
 	require.Equal(t, 1, mockSeedSecretStatus.callCount)
 	require.Equal(t, 0, mockSeedStageStatus.callCount)
 

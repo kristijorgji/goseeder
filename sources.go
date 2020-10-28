@@ -10,6 +10,11 @@ import (
 
 var dataPath = "db/seeds/data"
 
+//SetDataPath this will allow you to specify a custom path where your seed data is located
+func SetDataPath(path string) {
+	dataPath = path
+}
+
 //FromJson inserts into a database table with name same as the filename all the json entries
 func (s Seeder) FromJson(filename string) {
 	var folder = ""

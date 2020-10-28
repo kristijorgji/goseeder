@@ -14,7 +14,7 @@ import (
 // Seeder root seeder offering access to db connection and util functions
 type Seeder struct {
 	DB      *sql.DB
-	context clientSeeder
+	context *clientSeeder
 }
 
 //Registration this allows for custom registration with full options available at once, like specifying custom seed name and env in one go. Then have to finish registration by calling Complete
@@ -52,11 +52,13 @@ var seeders []clientSeeder
 func WithSeeder(conProvider func() *sql.DB, clientMain func()) {
 	var seed = false
 	var env = ""
+	var skipCommon = false
 	var names = ""
 
 	flag.BoolVar(&seed, "gseed", seed, "goseeder - if set will seed")
 	flag.StringVar(&env, "gsenv", "", "goseeder - env for which seeds to execute")
 	flag.StringVar(&names, "gsnames", "", "goseeder - comma separated seeder names to run specific ones")
+	flag.BoolVar(&skipCommon, "gs-skip-common", skipCommon, "goseeder - this arg has effect only if also gsenv if set, then will not run the common seeds (seeds that do not have any env specified)")
 	flag.Parse()
 
 	if !seed {
@@ -69,7 +71,16 @@ func WithSeeder(conProvider func() *sql.DB, clientMain func()) {
 		specifiedSeeders = strings.Split(names, ",")
 	}
 
-	Execute(conProvider(), env, specifiedSeeders)
+	err := Execute(
+		conProvider(),
+		ForEnv(env),
+		ForSpecificSeeds(specifiedSeeders),
+		ShouldSkipCommon(skipCommon),
+	)
+
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 // Register the given seed function  as common to run for all environments
@@ -95,49 +106,68 @@ func RegisterForEnv(env string, seeder func(s Seeder)) {
 }
 
 // Execute use this method for using this lib programmatically and executing
-// seeder directly with full flexibility. Be sure first to have registered your
-// seeders
-func Execute(db *sql.DB, env string, seedMethodNames []string) {
+// seeder directly with full flexibility. Be sure first to have registered your seeders
+func Execute(db *sql.DB, options ...ConfigOption) error {
+	c := config{
+		env:             "",
+		seedMethodNames: []string{},
+		skipCommon:      false,
+	}
+	for _, option := range options {
+		option(&c)
+	}
+
 	// Execute all seeders if no method name is given
-	if len(seedMethodNames) == 0 {
-		if env == "" {
-			log.Println("Running all seeders...")
+	if len(c.seedMethodNames) == 0 {
+		if c.env == "" {
+			printInfo(fmt.Sprintf("Running all seeders...\n\n"))
 		} else {
-			log.Printf("Running seeders for env %s...\n", env)
+			printInfo(fmt.Sprintf("Running all seeders for env %s and common seeds (without env)...\n\n", c.env))
 		}
 		for _, seeder := range seeders {
-			if env == "" || env == seeder.env {
-				seed(&Seeder{
+			if c.env == "" || c.env == seeder.env || (seeder.env == "" && c.skipCommon == false) {
+				err := seed(&Seeder{
 					DB:      db,
-					context: seeder,
+					context: &seeder,
 				})
+				if err != nil {
+					return err
+				}
 			}
 		}
-		return
+		return nil
 	}
 
 	for _, seeder := range seeders {
-		if _, r := findString(seedMethodNames, seeder.name); (env == "" || env == seeder.env) && r {
-			seed(&Seeder{
+		if _, r := findString(c.seedMethodNames, seeder.name); (c.env == "" || c.env == seeder.env) && r {
+			err := seed(&Seeder{
 				DB:      db,
-				context: seeder,
+				context: &seeder,
 			})
+			if err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
-func seed(seeder *Seeder) {
+func seed(seeder *Seeder) (rerr error) {
 	clientSeeder := seeder.context
 	start := time.Now()
-	log.Printf("[%s] started seeding...\n", clientSeeder.name)
+	printInfo(fmt.Sprintf("[%s] started seeding...\n", clientSeeder.name))
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Print(printError(fmt.Sprintf("[%s] seed failed: %+v\n", clientSeeder.name, r)))
+			msg := fmt.Sprintf("[%s] seed failed: %+v\n", clientSeeder.name, r)
+			printError(msg)
+			rerr = errors.New(msg)
 		}
 	}()
 
 	clientSeeder.cb(*seeder)
 	elapsed := time.Since(start)
-	log.Printf("[%s] seeded successfully, duration %s\n", clientSeeder.name, elapsed)
+	printInfo(fmt.Sprintf("[%s] seeded successfully, duration %s\n\n", clientSeeder.name, elapsed))
+	return nil
 }
