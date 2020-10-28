@@ -17,17 +17,21 @@ Knowing that this is such an important key element of any big project for testin
 For now the library supports only MySql as a database driver for its utility functions like `FromJson` provided by `Seeder` struct, but it is db agnostic for your custom seeders you can use any database that is supported by `sql.DB`
 
 `goseeder`
-1. Allows specifying seeds for different environments such as test,common (all envs) and more (flexible you can define them) 
-2. Provides out of the box functions like `(s Seeder) FromJson` to seed the table from json data and more data formats and drivers coming soon
+1. It is designed for different kind of usages, for both programmatically or building into your exe and run via cli args
+1. Allows specifying seeds for different environments such as predefined test and custom specified envs by the user
+2. Allows specifying list (or single) seed name for execution
+3. Allows having common seeds that execute for every env, unless specified not to do so with the respective cli or option
+4. Provides out of the box functions like `(s Seeder) FromJson` to seed the table from json data and more data formats and drivers coming soon
 
 # Table of Contents
 
 - [Installation](#installation)
-- [Usage](#usage)
+- [Usage method 1: Turn your executable into seedable via cli args](#usage-method-1-turn-your-executable-into-seedable-via-cli-args)
     - [1. Change Your Main Function](#1-change-your-main-function)
     - [2. Registering Your Seeds](#2-registering-your-seeds)
     - [3. Run Seeds Only For Specific Env](#3-run-seeds-only-for-specific-env)
     - [4. Run Seeds By Name](#4-run-seeds-by-name)
+- [Usage method 2: Programmatically](#usage-method-2-programmatically)    
 - [Summary Of Cli Args](#summary-of-cli-args)
 - [License](#license)
 
@@ -37,7 +41,7 @@ For now the library supports only MySql as a database driver for its utility fun
 go get github.com/kristijorgji/goseeder
 ```
 
-## Usage
+## Usage method 1: Turn your executable into seedable via cli args
 
 [Please check examples/simpleshop](examples/simpleshop) for a full working separate go project that uses the seeder
 
@@ -185,6 +189,23 @@ If you have a seed registered for another environment, for example a test seed, 
 
 So the rule is it will always lookup in this pattern `db/seeds/data/[environment]/[specifiedFileName].[type]`
 
+You can also give a seed a custom name, if you do not want the function name to be used by default.
+You can register a seed in a fully flexible way like:
+
+```go
+// db/seeds/common.go
+package seeds
+
+import "github.com/kristijorgji/goseeder"
+
+func init() {
+    Registration{
+		Name: "another_name_for_cat_seeder",
+		Env:  "stage",
+	}.Complete(categoriesSeeder)
+}
+```
+
 ### 3. Run Seeds Only For Specific Env
 
 Many times we want to have seeds only for `test` environment, test purpose and want to avoid having thousand of randomly generated rows inserted into production database by mistake!
@@ -248,7 +269,15 @@ To run the test seeder above you have to run:
 go run main.go --gseed --gsenv=test
 ```
 
-This will run only the tests registered for the env `test`, all other seeds will get ignored (also those without environment known as `common` seeds))
+This will run only the tests registered for the env `test` and the `common` seeds. A seed is known as common if it is registered without envrionment via `Register` method and has empty string env.
+
+If you do not want common seeds to get executed, just specify the flag `--gs-skip-common`
+
+The above call to run only seeds for test `env`, and ignore the common ones then would be:
+
+```bash
+go run main.go --gseed --gsenv=test --gs-skip-common
+```
 
 ### 4. Run Seeds By Name
 
@@ -272,6 +301,99 @@ go run main.go --gseeder --gsnames=categoriesSeeder
 
 If you want to execute multiple seeds by specifying their names, just use comma separated value like `--gsnames=categoriesSeeder,someOtherSeeder`
 
+## Usage method 2: Programmatically
+
+`goseeder` is designed to fit all needs for being the best seeding tool.
+
+That means that you might want to seed data before your unit tests programmatically without using cli args. 
+
+That is straightforward to do with goseeder.
+Let us assume we want to test our api that connects to some database in the package `api`,
+
+The file `api/main_test.go` might look like below:
+
+```go
+//api/main_test.go
+package api
+
+import (
+	"database/sql"
+	_ "db/seeds" // please import your seeds package so they register or register programatically here too if you want before the seeder Execute is called
+	"log"
+	"os"
+	"testing"
+    "github.com/kristijorgji/goseeder"
+)
+
+
+func TestMain(m *testing.M) {
+	con := db.ConnectToTestDb()
+	SeedTestData(con)
+	r := m.Run()
+	os.Exit(r)
+}
+
+func SeedTestData(con *sql.DB) {
+	log.Println("Seeding test database")
+	goseeder.SetDataPath("../db/seeds/data")
+	err := goseeder.Execute(con, goseeder.ForEnv("test"), goseeder.ShouldSkipCommon(true))
+	if err != nil {
+		log.Fatal("Seeding test data failed\n")
+		os.Exit(-2)
+	}
+}
+```
+
+How nice is that ?!
+
+After the execution you have a database with data sourcing only from your seeds registered for test env (test seeds) !!!
+The above is production code used by one company, but you might need to adjust to your needs.
+
+Another common use case is to want to execute programmatically the seeder because you don't want to turn your executable into seedable (you don't want to use method 1)).
+
+Then again you can just create another file `myseeder.go` and inside it do your custom logic or handling of args then just execute
+`goseeder.Execute`
+
+Your `myseeder.go` might look like
+```go
+package main
+
+import (
+	_ "db/seeds"
+	"github.com/kristijorgji/goseeder"
+)
+
+func main() {
+	err := goseeder.Execute(connectToDbOrDie())
+    if err != nil {
+        log.Fatal("Seeding test data failed\n")
+        os.Exit(-2)
+    }
+}
+
+// your func here to connect to db 
+// connectToDbOrDie
+
+```
+
+Then you have your server or app executable separate for example in `main.go` file, and the seeder functionality separated in `myseeder.go`
+
+You can easily run your seeder `go run myseeder.go`, or build and run etc based on your requirements.
+
+You can pass all the necessary options to the  `goSeeder.Execute` method.
+If you want to execute seeders for a particular env only (skip common seeds) for example you do it like:
+```go
+goseeder.Execute(con, goseeder.ForEnv("test"), goseeder.ShouldSkipCommon(true))
+```
+
+These are the possible options you can give after the mandatory db connection:
+- `ForEnv(env string)` - you can specify here the env for which you want to execute
+- `ForSpecificSeeds(seedNames []string)` - just specify array of seed names you want to execute
+- `ShouldSkipCommon(value bool)` - this option has effect only if also gsenv if set, then will not run the common seeds (seeds that do not have any env specified
+- `ShouldSkipCommon(value bool)` - this option has effect only if also gsenv if set, then will not run the common seeds (seeds that do not have any env specified
+
+
+
 ## Summary Of Cli Args
 
 You can always  run
@@ -285,16 +407,16 @@ For the current version the result is:
 
 ```bash
 INR00009:simpleshop kristi.jorgji$ go run main.go --help
-Usage of /var/folders/rd/2bkszcpx6xgcddpn7f3bhczn1m9fb7/T/go-build810543742/b001/exe/main:
+Usage of /var/folders/rd/2bkszcpx6xgcddpn7f3bhczn1m9fb7/T/go-build358407825/b001/exe/main:
+  -gs-skip-common
+        goseeder - this arg has effect only if also gsenv if set, then will not run the common seeds (seeds that do not have any env specified)
   -gseed
         goseeder - if set will seed
   -gsenv string
         goseeder - env for which seeds to execute
   -gsnames string
         goseeder - comma separated seeder names to run specific ones
-INR00009:simpleshop kristi.jorgji$ 
 ```
-
 
 ## License
 
