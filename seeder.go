@@ -120,12 +120,12 @@ func Execute(db *sql.DB, options ...ConfigOption) error {
 	// Execute all seeders if no method name is given
 	if len(c.seedMethodNames) == 0 {
 		if c.env == "" {
-			printInfo(fmt.Sprintf("Running all seeders...\n\n"))
+			printInfo(("Running all seeders...\n\n"))
 		} else {
 			printInfo(fmt.Sprintf("Running all seeders for env %s and common seeds (without env)...\n\n", c.env))
 		}
 		for _, seeder := range seeders {
-			if c.env == "" || c.env == seeder.env || (seeder.env == "" && c.skipCommon == false) {
+			if c.env == "" || c.env == seeder.env || (seeder.env == "" && !c.skipCommon) {
 				err := seed(&Seeder{
 					DB:      db,
 					context: &seeder,
