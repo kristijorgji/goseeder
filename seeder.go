@@ -125,7 +125,7 @@ func Execute(db *sql.DB, options ...ConfigOption) error {
 			printInfo(fmt.Sprintf("Running all seeders for env %s and common seeds (without env)...\n\n", c.env))
 		}
 		for _, seeder := range seeders {
-			if c.env == "" || c.env == seeder.env || (seeder.env == "" && !c.skipCommon) {
+			if c.env == seeder.env || (seeder.env == "" && !c.skipCommon) {
 				err := seed(&Seeder{
 					DB:      db,
 					context: &seeder,
