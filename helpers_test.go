@@ -22,7 +22,7 @@ func TestFindString(t *testing.T) {
 
 func TestPrepareStatement(t *testing.T) {
 	table := "categories"
-	data := map[string]string{
+	data := map[string]interface{}{
 		"id":   "100",
 		"name": "common",
 	}
@@ -37,7 +37,7 @@ func TestPrepareStatement(t *testing.T) {
 	require.Equal(
 		t,
 		[]interface{}{
-			int64(100),
+			"100",
 			"common"},
 		args,
 	)
@@ -45,13 +45,17 @@ func TestPrepareStatement(t *testing.T) {
 
 var testCases = []struct {
 	name     string
-	value    string
+	value    interface{}
 	expected interface{}
 }{
-	{"bool", "true", true},
-	{"bool", "false", false},
-	{"int", "12", int64(12)},
-	{"float", "12.77", 12.770000457763672},
+	{"bool_string", "true", "true"},
+	{"bool_true", true, true},
+	{"bool_string", "false", "false"},
+	{"bool_false", false, false},
+	{"int_string", "12", "12"},
+	{"int", 12, int(12)},
+	{"float_string", "12.77", "12.77"},
+	{"float", 12.77, 12.77},
 	{"string", "justastring", "justastring"},
 	{"string_with_nr", "12justastring", "12justastring"},
 }

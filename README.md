@@ -418,9 +418,25 @@ Usage of /var/folders/rd/2bkszcpx6xgcddpn7f3bhczn1m9fb7/T/go-build358407825/b001
         goseeder - comma separated seeder names to run specific ones
 ```
 
+## A note on `common` seeds
+
+`common` is presented as one environment, but it is not such.
+It is a special way of executing particular seeds always! in all environments, together with respective env seeds.
+
+If you want to skip common executions, the means to do so are provided already in this documentation.
+From cli with the flag 
+```
+-gs-skip-common
+```
+
+and programmatically call `ShouldSkipCommon(true)`, like simple example:
+```
+err := goseeder.Execute(con, goseeder.ForEnv("test"), goseeder.ShouldSkipCommon(true))
+```
+
 ## License
 
-goseeder is released under the MIT Licence. See the bundled LICENSE file for details.
+goseeder is released under the MIT Licence @kristijorgji. See the bundled LICENSE file for details.
 
 
 

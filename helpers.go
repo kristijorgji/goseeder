@@ -2,6 +2,7 @@ package goseeder
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -40,7 +41,7 @@ func findString(slice []string, val string) (int, bool) {
 	return -1, false
 }
 
-func prepareStatement(table string, row map[string]string) (strings.Builder, []interface{}) {
+func prepareStatement(table string, row map[string]interface{}) (strings.Builder, []interface{}) {
 	var left strings.Builder
 	var right strings.Builder
 
@@ -71,14 +72,37 @@ func prepareStatement(table string, row map[string]string) (strings.Builder, []i
 	return left, args
 }
 
-func parseValue(value string) interface{} {
-	if parsed, err := strconv.ParseInt(value, 10, 64); err == nil {
+func parseValue(value interface{}) interface{} {
+	if value == nil {
+		return value
+	}
+
+	switch v := value.(type) {
+	case bool:
+		return value.(bool)
+	case int:
+		return value.(int)
+	case int32:
+		return value.(int32)
+	case int64:
+		return value.(int64)
+	case float32:
+		return value.(float32)
+	case float64:
+		return value.(float64)
+	case string:
+		return value.(string)
+	default:
+		log.Printf("Don't know type : %v", v)
+	}
+
+	if parsed, err := strconv.ParseInt(value.(string), 10, 64); err == nil {
 		return parsed
 	}
-	if parsed, err := strconv.ParseFloat(value, 32); err == nil {
+	if parsed, err := strconv.ParseFloat(value.(string), 32); err == nil {
 		return parsed
 	}
-	if parsed, err := strconv.ParseBool(value); err == nil {
+	if parsed, err := strconv.ParseBool(value.(string)); err == nil {
 		return parsed
 	}
 

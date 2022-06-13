@@ -26,7 +26,7 @@ func (s Seeder) FromJson(filename string) {
 		log.Fatal(err)
 	}
 
-	m := []map[string]string{}
+	m := []map[string]interface{}{}
 	err = json.Unmarshal(content, &m)
 	if err != nil {
 		panic(err)
