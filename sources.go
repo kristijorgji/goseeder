@@ -17,11 +17,7 @@ func SetDataPath(path string) {
 
 //FromJson inserts into a database table with name same as the filename all the json entries
 func (s Seeder) FromJson(filename string) {
-	var folder = ""
-	if s.context.env != "" {
-		folder = fmt.Sprintf("%s/", s.context.env)
-	}
-	content, err := ioutil.ReadFile(fmt.Sprintf("%s/%s%s.json", dataPath, folder, filename))
+	content, err := ioutil.ReadFile(fmt.Sprintf("%s/%s.json", dataPath, filename))
 	if err != nil {
 		log.Fatal(err)
 	}
