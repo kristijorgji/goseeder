@@ -1,6 +1,7 @@
 package goseeder
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"reflect"
@@ -92,6 +93,12 @@ func parseValue(value interface{}) interface{} {
 		return value.(float64)
 	case string:
 		return value.(string)
+	case interface{}:
+		asJson, err := json.Marshal(value)
+		if err != nil {
+			panic(err)
+		}
+		return string(asJson)
 	default:
 		log.Printf("Don't know type : %v", v)
 	}

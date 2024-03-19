@@ -158,4 +158,12 @@ func TestRegisterForEnv(t *testing.T) {
 	require.NotEmpty(t, a.cb)
 }
 
+func TestRegisterForEnvNamed(t *testing.T) {
+	RegisterForEnvNamed("mySuperEnv", dummySeeder, "customName")
+	a := seeders[len(seeders)-1]
+	require.Equal(t, "mySuperEnv", a.env)
+	require.Equal(t, "customName", a.name)
+	require.NotEmpty(t, a.cb)
+}
+
 func dummySeeder(s Seeder) {}

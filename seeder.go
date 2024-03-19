@@ -83,7 +83,7 @@ func WithSeeder(conProvider func() *sql.DB, clientMain func()) {
 	}
 }
 
-// Register the given seed function  as common to run for all environments
+// Register the given seed function as common to run for all environments
 func Register(seeder func(s Seeder)) {
 	RegisterForEnv("", seeder)
 }
@@ -101,6 +101,15 @@ func RegisterForEnv(env string, seeder func(s Seeder)) {
 	seeders = append(seeders, clientSeeder{
 		env:  env,
 		name: match[1],
+		cb:   seeder,
+	})
+}
+
+// RegisterForEnvNamed register the given seed function for a specific environment and give it a specific name
+func RegisterForEnvNamed(env string, seeder func(s Seeder), name string) {
+	seeders = append(seeders, clientSeeder{
+		env:  env,
+		name: name,
 		cb:   seeder,
 	})
 }
@@ -156,11 +165,11 @@ func Execute(db *sql.DB, options ...ConfigOption) error {
 func seed(seeder *Seeder) (rerr error) {
 	clientSeeder := seeder.context
 	start := time.Now()
-	printInfo(fmt.Sprintf("[%s] started seeding...\n", clientSeeder.name))
+	printInfo(fmt.Sprintf("[%s][%s] started seeding...\n", clientSeeder.env, clientSeeder.name))
 
 	defer func() {
 		if r := recover(); r != nil {
-			msg := fmt.Sprintf("[%s] seed failed: %+v\n", clientSeeder.name, r)
+			msg := fmt.Sprintf("[%s][%s] seed failed: %+v\n", clientSeeder.env, clientSeeder.name, r)
 			printError(msg)
 			rerr = errors.New(msg)
 		}
@@ -168,6 +177,6 @@ func seed(seeder *Seeder) (rerr error) {
 
 	clientSeeder.cb(*seeder)
 	elapsed := time.Since(start)
-	printInfo(fmt.Sprintf("[%s] seeded successfully, duration %s\n\n", clientSeeder.name, elapsed))
+	printInfo(fmt.Sprintf("[%s][%s] seeded successfully, duration %s\n\n", clientSeeder.env, clientSeeder.name, elapsed))
 	return nil
 }
